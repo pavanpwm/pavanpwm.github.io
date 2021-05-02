@@ -27,7 +27,9 @@ mark {
   color: black;
 }
 
-
+select {
+        width:200px;
+}
 
 
 
@@ -39,14 +41,15 @@ mark {
 
   <div id="pForm" class=" form-inline" style="margin:10px 10px 10px 10px">
     <label for="folder" class="mr-sm-2">Folder path:</label>
-    <input type="text" size="100" class="form-control mb-2 mr-sm-2" placeholder="Enter folder path" id="folder">
+    <input type="text" onfocus="changeButton()" size="70" class="form-control mb-2 mr-sm-2" placeholder="Enter folder path" id="folder">
     <label for="percentage" class="mr-sm-2">Plagiarism percentage:</label>
-    <input type="number" size="50" value="80" class="form-control mb-2 mr-sm-2" id="percentage">
-    <button type="submit" onclick="submitForm()" class="btn btn-primary mb-2">Submit</button>
+    <input type="number" size="50" onfocus="changeButton()"  class="form-control mb-2 mr-sm-2" value="80" placeholder="Default 80%" id="percentage">
+    <button type="submit" id="load" onclick="submitForm()" class="btn btn-primary mb-2">Submit</button>
   </div>
 
 
-  <div id="clusterOpts" style="margin:10px 10px 10px 10px" >
+
+  <div id="clusterOpts" style="margin:10px 10px 10px 10px" style="display:'none'">
     <label for="clusters">Choose a file from clusters:</label>
     <select name="clusters" id="clusters" onchange="setSelected(this)">
     </select>
@@ -78,6 +81,9 @@ mark {
 var response = {};
 
 function submitForm(){
+  document.getElementById("load").disabled = true;
+  document.getElementById("load").className = "btn mb-2 btn-info";
+  document.getElementById("load").innerHTML = "Loading please wait.....";
   var formData = {path: document.getElementById("folder").value,
                   criticalScore: document.getElementById("percentage").value
                  };
@@ -91,6 +97,12 @@ function submitForm(){
         success: function (result) {
             response = result;
             populateOptions();
+            document.getElementById("load").className = "btn mb-2 btn-success";
+            document.getElementById("load").innerHTML = "Success";
+       },
+       error: function (){
+         document.getElementById("load").className = "btn mb-2 btn-danger";
+         document.getElementById("load").innerHTML = "Error! Try again";
        },
   });
 }
@@ -100,9 +112,9 @@ function submitForm(){
 
    function populateOptions(){
 
-     document.getElementById("clusters").innerHTML = "<option>Select a file</option>";
+     document.getElementById("clusters").innerHTML = "<option>Found " + response.length + " clusters</option>";
 	   for (var i = 0; i < response.length; i++) {
-       document.getElementById("clusters").innerHTML += "<optgroup label='Cluster-" + i + "-" + response[i][0].id + "'>";
+       document.getElementById("clusters").innerHTML += "<optgroup label='Cluster-" + (i+1) + "-" + response[i][0].id + "'>";
         for (var j = 1; j < response[i].length; j++) {
             document.getElementById("clusters").innerHTML += "<option value='index-" + i + "-" + j + "' >"  + response[i][j].id + "</option>";
         }
@@ -125,14 +137,14 @@ function submitForm(){
    function showSelected(){
      var tog = document.getElementById("switch1").checked;
      if (tog == true) {
-       document.getElementById("reference").innerHTML = "<em>"+ response[refIndex][0].id + "</em><br>";
+       document.getElementById("reference").innerHTML = "<em style='background-color:red'>"+ response[refIndex][0].id + "</em><br>";
        document.getElementById("reference").innerHTML += "<ol start='01'>"
        for (var i = 0; i < response[refIndex][0].content.length; i++) {
          document.getElementById("reference").innerHTML += "<li>" + response[refIndex][0].content[i] + "</li>";
        }
        document.getElementById("reference").innerHTML += "</ol>"
 
-       document.getElementById("compare").innerHTML = "<em>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
+       document.getElementById("compare").innerHTML = "<em style='background-color:red'>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
        document.getElementById("compare").innerHTML += "<ol start='01'>"
        var refStr = response[refIndex][0].content.toString().toLowerCase().replace(/ /g,'');
        for (var i = 0; i < response[refIndex][compIndex].content.length; i++) {
@@ -144,14 +156,14 @@ function submitForm(){
        }
        document.getElementById("compare").innerHTML += "</ol>"
      }else{
-       document.getElementById("reference").innerHTML = "<em>"+ response[refIndex][0].id + "</em><br>";
+       document.getElementById("reference").innerHTML = "<em style='background-color:red'>"+ response[refIndex][0].id + "</em><br>";
        document.getElementById("reference").innerHTML += "<ol start='01'>"
        for (var i = 0; i < response[refIndex][0].content.length; i++) {
          document.getElementById("reference").innerHTML += "<li>" + response[refIndex][0].content[i] + "</li>";
        }
        document.getElementById("reference").innerHTML += "</ol>"
 
-       document.getElementById("compare").innerHTML = "<em>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
+       document.getElementById("compare").innerHTML = "<em style='background-color:red'>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
        document.getElementById("compare").innerHTML += "<ol start='01'>"
        var refStr = response[refIndex][0].content.toString().toLowerCase().replace(/ /g,'');
        for (var i = 0; i < response[refIndex][compIndex].content.length; i++) {
@@ -163,8 +175,14 @@ function submitForm(){
        }
        document.getElementById("compare").innerHTML += "</ol>"
      }
+   }
 
 
+
+   function changeButton(){
+     document.getElementById("load").disabled = false;
+     document.getElementById("load").className = "btn mb-2 btn-primary";
+     document.getElementById("load").innerHTML = "Submit";
    }
 
 
