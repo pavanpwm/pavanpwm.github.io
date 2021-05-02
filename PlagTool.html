@@ -1,0 +1,180 @@
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<style>
+.scroll {
+margin: 5px;
+padding: 5px;
+width: 300px;
+overflow-x: auto;
+overflow-y: hidden;
+font-family: monospace;
+}
+
+mark {
+  background-color: yellow;
+  color: black;
+}
+
+
+
+
+
+</style>
+
+<body>
+<br>
+
+
+  <div id="pForm" class=" form-inline" style="margin:10px 10px 10px 10px">
+    <label for="folder" class="mr-sm-2">Folder path:</label>
+    <input type="text" size="100" class="form-control mb-2 mr-sm-2" placeholder="Enter folder path" id="folder">
+    <label for="percentage" class="mr-sm-2">Plagiarism percentage:</label>
+    <input type="number" size="50" class="form-control mb-2 mr-sm-2" placeholder="Default 80%" id="percentage">
+    <button type="submit" onclick="submitForm()" class="btn btn-primary mb-2">Submit</button>
+  </div>
+
+
+  <div id="clusterOpts" style="margin:10px 10px 10px 10px" >
+    <label for="clusters">Choose a file from clusters:</label>
+    <select name="clusters" id="clusters" onchange="setSelected(this)">
+    </select>
+    <div class="custom-control custom-switch">
+     <input type="checkbox" onchange="showSelected()" class="custom-control-input" id="switch1" >
+     <label class="custom-control-label"  for="switch1">Toggle Diffs/Similar</label>
+   </div>
+  </div>
+
+
+<div id="diffs" class="row" style="margin:5px 5px 5px 5px">
+  <div id="reference" class="col container p-3 my-3 bg-dark text-white scroll" >
+  </div>
+  <div id="compare" class="col container p-3 my-3 bg-dark text-white scroll" >
+  </div>
+</div>
+
+
+
+
+
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript">
+
+
+var response = {};
+
+function submitForm(){
+  var formData = {path: document.getElementById("folder").value,
+                  criticalScore: document.getElementById("percentage").value
+                 };
+
+  $.ajax({
+        type: "GET",
+        url: 'http://' + 'localhost:8080/',
+        contentType: 'application/json',
+        data: formData,
+        dataType: "json",                             // data type of response
+        success: function (result) {
+            response = result;
+            populateOptions();
+       },
+  });
+}
+
+
+
+
+   function populateOptions(){
+
+     document.getElementById("clusters").innerHTML = "<option>Select a file</option>";
+	   for (var i = 0; i < response.length; i++) {
+       document.getElementById("clusters").innerHTML += "<optgroup label='Cluster-" + i + "-" + response[i][0].id + "'>";
+        for (var j = 1; j < response[i].length; j++) {
+            document.getElementById("clusters").innerHTML += "<option value='index-" + i + "-" + j + "' >"  + response[i][j].id + "</option>";
+        }
+       document.getElementById("clusters").innerHTML += "</optgroup>";
+	   }
+   }
+
+   var refIndex;
+   var compIndex;
+
+   function setSelected(selectObj){
+     var idx = selectObj.selectedIndex;
+     var selectedValue = selectObj.options[idx].value;
+     var res = selectedValue.split("-");
+     refIndex = parseInt(res[1]);
+     compIndex = parseInt(res[2]);
+     showSelected();
+   }
+
+   function showSelected(){
+     var tog = document.getElementById("switch1").checked;
+     if (tog == true) {
+       document.getElementById("reference").innerHTML = "<em>"+ response[refIndex][0].id + "</em><br>";
+       document.getElementById("reference").innerHTML += "<ol start='01'>"
+       for (var i = 0; i < response[refIndex][0].content.length; i++) {
+         document.getElementById("reference").innerHTML += "<li>" + response[refIndex][0].content[i] + "</li>";
+       }
+       document.getElementById("reference").innerHTML += "</ol>"
+
+       document.getElementById("compare").innerHTML = "<em>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
+       document.getElementById("compare").innerHTML += "<ol start='01'>"
+       var refStr = response[refIndex][0].content.toString().toLowerCase().replace(/ /g,'');
+       for (var i = 0; i < response[refIndex][compIndex].content.length; i++) {
+         if (refStr.includes(response[refIndex][compIndex].content[i].toLowerCase().replace(/ /g,''))) {
+           document.getElementById("compare").innerHTML += "<li><mark>" + response[refIndex][compIndex].content[i] + "</mark></li>";
+         }else{
+           document.getElementById("compare").innerHTML += "<li>" + response[refIndex][compIndex].content[i] + "</li>";
+         }
+       }
+       document.getElementById("compare").innerHTML += "</ol>"
+     }else{
+       document.getElementById("reference").innerHTML = "<em>"+ response[refIndex][0].id + "</em><br>";
+       document.getElementById("reference").innerHTML += "<ol start='01'>"
+       for (var i = 0; i < response[refIndex][0].content.length; i++) {
+         document.getElementById("reference").innerHTML += "<li>" + response[refIndex][0].content[i] + "</li>";
+       }
+       document.getElementById("reference").innerHTML += "</ol>"
+
+       document.getElementById("compare").innerHTML = "<em>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
+       document.getElementById("compare").innerHTML += "<ol start='01'>"
+       var refStr = response[refIndex][0].content.toString().toLowerCase().replace(/ /g,'');
+       for (var i = 0; i < response[refIndex][compIndex].content.length; i++) {
+         if (!refStr.includes(response[refIndex][compIndex].content[i].toLowerCase().replace(/ /g,''))) {
+           document.getElementById("compare").innerHTML += "<li><mark>" + response[refIndex][compIndex].content[i] + "</mark></li>";
+         }else{
+           document.getElementById("compare").innerHTML += "<li>" + response[refIndex][compIndex].content[i] + "</li>";
+         }
+       }
+       document.getElementById("compare").innerHTML += "</ol>"
+     }
+
+
+   }
+
+
+
+
+</script>
+
+
+
+
+</body>
+
+</html>
