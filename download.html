@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+<style media="screen">
+  input{
+    margin:5px;
+  }
+
+  .center {
+  margin: auto;
+  width: 50%;
+  border: 3px solid green;
+  padding: 10px;
+}
+</style>
+<br><br><br><br>
+<div class="center">
+  <input type="url" size="70" id="url" placeholder="enter url for first page">
+  <br>
+  <input type="number" id="count"  placeholder="enter page count">
+  <button type="button" onclick="submitForm()" name="button">Submit</button>
+</div>
+
+
+
+
+
+  <script type="text/javascript">
+
+    function submitForm(){
+      var url = document.getElementById("url").value;
+      var count = document.getElementById("count").value;
+      for (var i = 0; i < count; i++) {
+        var link = document.createElement('a');
+        link.href = url+i;
+        link.download = 'tcs/img.jpg';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+
+
+
+
+
+  </script>
+
+
+  </body>
+</html>
