@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html>
 
@@ -70,6 +68,9 @@ select {
 
 
 
+<br>
+
+
 
 
 
@@ -79,15 +80,16 @@ select {
 
 
 var response = {};
-
+var loadStatus = document.getElementById("load");
 function submitForm(){
-  document.getElementById("load").disabled = true;
-  document.getElementById("load").className = "btn mb-2 btn-info";
-  document.getElementById("load").innerHTML = "Loading please wait.....";
+  resetTimer();
+  start();
+  loadStatus.disabled = true;
+  loadStatus.className = "btn mb-2 btn-info";
+  loadStatus.innerHTML = "Loading please wait....";
   var formData = {path: document.getElementById("folder").value,
                   criticalScore: document.getElementById("percentage").value
                  };
-
   $.ajax({
         type: "GET",
         url: 'http://' + 'localhost:8080/',
@@ -97,12 +99,14 @@ function submitForm(){
         success: function (result) {
             response = result;
             populateOptions();
-            document.getElementById("load").className = "btn mb-2 btn-success";
-            document.getElementById("load").innerHTML = "Success";
+            loadStatus.className = "btn mb-2 btn-success";
+            loadStatus.innerHTML = "Success [in "+ secondString + "." + tensString +" seconds]";
+            stop();
        },
        error: function (){
-         document.getElementById("load").className = "btn mb-2 btn-danger";
-         document.getElementById("load").innerHTML = "Error! Try again";
+         loadStatus.className = "btn mb-2 btn-danger";
+         loadStatus.innerHTML = "Error! Try again";
+         stop();
        },
   });
 }
@@ -110,83 +114,131 @@ function submitForm(){
 
 
 
-   function populateOptions(){
-
-     document.getElementById("clusters").innerHTML = "<option>Found " + response.length + " clusters</option>";
+var clusters = document.getElementById("clusters");
+function populateOptions(){
+     clusters.innerHTML = "<option>Found " + response.length + " clusters</option>";
 	   for (var i = 0; i < response.length; i++) {
-       document.getElementById("clusters").innerHTML += "<optgroup label='Cluster-" + (i+1) + "-" + response[i][0].id + "'>";
+       clusters.innerHTML += "<optgroup label='Cluster-" + (i+1) + "-" + response[i][0].id + "'>";
         for (var j = 1; j < response[i].length; j++) {
-            document.getElementById("clusters").innerHTML += "<option value='index-" + i + "-" + j + "' >"  + response[i][j].id + "</option>";
+            clusters.innerHTML += "<option value='index-" + i + "-" + j + "' >"  + response[i][j].id + "</option>";
         }
-       document.getElementById("clusters").innerHTML += "</optgroup>";
+       clusters.innerHTML += "</optgroup>";
 	   }
-   }
+}
 
-   var refIndex;
-   var compIndex;
 
-   function setSelected(selectObj){
+
+
+var refIndex;
+var compIndex;
+function setSelected(selectObj){
      var idx = selectObj.selectedIndex;
      var selectedValue = selectObj.options[idx].value;
      var res = selectedValue.split("-");
      refIndex = parseInt(res[1]);
      compIndex = parseInt(res[2]);
      showSelected();
-   }
+}
 
-   function showSelected(){
+
+
+
+var reference = document.getElementById("reference");
+var compare = document.getElementById("compare");
+function showSelected(){
      var tog = document.getElementById("switch1").checked;
      if (tog == true) {
-       document.getElementById("reference").innerHTML = "<em style='background-color:red'>"+ response[refIndex][0].id + "</em><br>";
-       document.getElementById("reference").innerHTML += "<ol start='01'>"
+       reference.innerHTML = "<em style='background-color:red'>"+ response[refIndex][0].id + "</em><br>";
+       reference.innerHTML += "<ol start='01'>"
        for (var i = 0; i < response[refIndex][0].content.length; i++) {
-         document.getElementById("reference").innerHTML += "<li>" + response[refIndex][0].content[i] + "</li>";
+         reference.innerHTML += "<li>" + response[refIndex][0].content[i] + "</li>";
        }
-       document.getElementById("reference").innerHTML += "</ol>"
-
-       document.getElementById("compare").innerHTML = "<em style='background-color:red'>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
-       document.getElementById("compare").innerHTML += "<ol start='01'>"
+       reference.innerHTML += "</ol>"
+       compare.innerHTML = "<em style='background-color:red'>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
+       compare.innerHTML += "<ol start='01'>"
        var refStr = response[refIndex][0].content.toString().toLowerCase().replace(/ /g,'');
        for (var i = 0; i < response[refIndex][compIndex].content.length; i++) {
          if (refStr.includes(response[refIndex][compIndex].content[i].toLowerCase().replace(/ /g,''))) {
-           document.getElementById("compare").innerHTML += "<li><mark>" + response[refIndex][compIndex].content[i] + "</mark></li>";
+           compare.innerHTML += "<li><mark>" + response[refIndex][compIndex].content[i] + "</mark></li>";
          }else{
-           document.getElementById("compare").innerHTML += "<li>" + response[refIndex][compIndex].content[i] + "</li>";
+           compare.innerHTML += "<li>" + response[refIndex][compIndex].content[i] + "</li>";
          }
        }
-       document.getElementById("compare").innerHTML += "</ol>"
+       compare.innerHTML += "</ol>"
      }else{
-       document.getElementById("reference").innerHTML = "<em style='background-color:red'>"+ response[refIndex][0].id + "</em><br>";
-       document.getElementById("reference").innerHTML += "<ol start='01'>"
+       reference.innerHTML = "<em style='background-color:red'>"+ response[refIndex][0].id + "</em><br>";
+       reference.innerHTML += "<ol start='01'>"
        for (var i = 0; i < response[refIndex][0].content.length; i++) {
-         document.getElementById("reference").innerHTML += "<li>" + response[refIndex][0].content[i] + "</li>";
+         reference.innerHTML += "<li>" + response[refIndex][0].content[i] + "</li>";
        }
-       document.getElementById("reference").innerHTML += "</ol>"
-
-       document.getElementById("compare").innerHTML = "<em style='background-color:red'>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
-       document.getElementById("compare").innerHTML += "<ol start='01'>"
+       reference.innerHTML += "</ol>"
+       compare.innerHTML = "<em style='background-color:red'>"+ response[refIndex][compIndex].id +" -------> Plagiarism score : " + response[refIndex][compIndex].plagScore + "</em><br>";
+       compare.innerHTML += "<ol start='01'>"
        var refStr = response[refIndex][0].content.toString().toLowerCase().replace(/ /g,'');
        for (var i = 0; i < response[refIndex][compIndex].content.length; i++) {
          if (!refStr.includes(response[refIndex][compIndex].content[i].toLowerCase().replace(/ /g,''))) {
-           document.getElementById("compare").innerHTML += "<li><mark>" + response[refIndex][compIndex].content[i] + "</mark></li>";
+           compare.innerHTML += "<li><mark>" + response[refIndex][compIndex].content[i] + "</mark></li>";
          }else{
-           document.getElementById("compare").innerHTML += "<li>" + response[refIndex][compIndex].content[i] + "</li>";
+           compare.innerHTML += "<li>" + response[refIndex][compIndex].content[i] + "</li>";
          }
        }
-       document.getElementById("compare").innerHTML += "</ol>"
+       compare.innerHTML += "</ol>"
      }
-   }
+}
 
 
 
-   function changeButton(){
-     document.getElementById("load").disabled = false;
-     document.getElementById("load").className = "btn mb-2 btn-primary";
-     document.getElementById("load").innerHTML = "Submit";
-   }
+function changeButton(){
+     loadStatus.disabled = false;
+     loadStatus.className = "btn mb-2 btn-primary";
+     loadStatus.innerHTML = "Submit";
+}
 
 
 
+
+
+
+
+
+//timer
+
+var seconds = 00;
+var tens = 00;
+var tensString = "";
+var secondString = "";
+var interval ;
+function start(){
+       clearInterval(interval);
+       interval = setInterval(startTimer, 10);
+}
+function stop() {
+      clearInterval(interval);
+}
+function resetTimer(){
+  clearInterval(interval);
+  seconds = 00;
+  tens = 00;
+}
+function startTimer () {
+      tens++;
+      if(tens < 9){
+        tensString = "0" + tens;
+      }
+      if (tens > 9){
+        tensString = tens;
+      }
+      if (tens > 99) {
+        seconds++;
+        secondString = "" + seconds;
+        tens = 0;
+        tensString = "0" + 0;
+      }
+      if (seconds > 9){
+        secondString = seconds;
+      }
+      loadStatus.innerHTML = "Loading please wait...[in "+ secondString + "." + tensString +" seconds]"
+}
 
 </script>
 
