@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1024">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+
+
+</head>
+
+
+<body>
+  <nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+      <div class="navbar-header pull-right">
+        <a style="font-size:12px" class="navbar-brand" href="#">Made by Pavan BTD</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-6">
+        <h4> <strong>Upload excel file that contains both column data [...from]</strong></h4>
+        <div class="form-group">
+          <input type="file" id="from" accept=".xls,.xlsx">
+        </div>
+          <label for="searchInColumn">Select the Search column:</label>
+          <select name="searchInColumn" id="searchInColumn">
+            <option  disabled>___________headers___________</option>
+          </select>
+          <br><br>
+          <label for="copyFromColumn">Select the Copy-From column:</label>
+          <select name="copyFromColumn" id="copyFromColumn">
+            <option  disabled>_________headers_________</option>
+          </select>
+          <br><br>
+          <input type="checkbox" id="overwrite" name="overwrite" >
+          <label for="overwrite">Overwrite previous data</label>
+      </div>
+      <div class="col-sm-6">
+        <h4> <strong>Upload excel file that contains only one column data [...to]</strong></h4>
+        <div class="form-group">
+          <input type="file" id="to" accept=".xls,.xlsx">
+        </div>
+        <label for="referenceColoumn">Select the Search column:</label>
+        <select name="referenceColoumn" id="referenceColoumn">
+          <option  disabled>___________headers___________</option>
+        </select>
+        <br><br>
+        <label for="copyToColumn">Select the Copy-To column:</label>
+        <select name="copyToColumn" id="copyToColumn">
+          <option  disabled>__________headers___________</option>
+        </select>
+        <br><br>
+        <button type="button" class="btn-primary btn-sm pull-left" onclick="startCopy()" id="uploadBtn" disabled>Start copying and download when finished</button>
+      </div>
+    </div>
+  </div>
+
+
+
+
+<script>
+
+
+
+// gettings headers of first excel
+  let selectedFile1;
+  let data1=[];
+  let xcelJsonObject1 = [];
+  var headers1 = [];
+  document.getElementById('from').addEventListener("change", (event) => {
+    document.getElementById("uploadBtn").innerHTML = "<i class='fa fa-circle-o-notch fa-spin' style='font-size:15px'></i> Please wait while uploading!";
+      selectedFile1 = event.target.files[0];
+      XLSX.utils.json_to_sheet(data1, 'out.xlsx');
+      if(selectedFile1){
+          let fileReader = new FileReader();
+          fileReader.readAsBinaryString(selectedFile1);
+          fileReader.onload = (event)=>{
+           let data1 = event.target.result;
+           let workbook = XLSX.read(data1,{type:"binary"});
+           let rowObject = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[workbook.SheetNames[0]]);
+
+           headers1 = Object.keys(rowObject[0]);
+           xcelJsonObject1 = rowObject;    // all rows json object
+
+           document.getElementById("searchInColumn").innerHTML = "";
+           document.getElementById("copyFromColumn").innerHTML = "";
+           for(var i=0; i<headers1.length; i++){
+              document.getElementById("searchInColumn").innerHTML += "<option value='"+ headers1[i] +"'>"+ headers1[i] +"</option>";
+              document.getElementById("copyFromColumn").innerHTML += "<option value='"+ headers1[i] +"'>"+ headers1[i] +"</option>";
+           }
+         }
+      }
+      document.getElementById("uploadBtn").innerHTML = "Start copying and download when finished";
+      document.getElementById("uploadBtn").disabled = false;
+  })
+
+// getting headers of second excel
+  let selectedFile2;
+  let data2=[];
+  let xcelJsonObject2 = [];
+  var headers2 = [];
+  var outputExcelFileName = "";
+  document.getElementById('to').addEventListener("change", (event) => {
+      document.getElementById("uploadBtn").innerHTML = "<i class='fa fa-circle-o-notch fa-spin' style='font-size:15px'></i> Please wait while uploading!";
+      outputExcelFileName = document.getElementById("to").value.split("\\").pop();
+      selectedFile2 = event.target.files[0];
+      XLSX.utils.json_to_sheet(data2, 'out.xlsx');
+      if(selectedFile2){
+          let fileReader = new FileReader();
+          fileReader.readAsBinaryString(selectedFile2);
+          fileReader.onload = (event)=>{
+           let data2 = event.target.result;
+           let workbook = XLSX.read(data2,{type:"binary"});
+           let rowObject = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[workbook.SheetNames[0]]);
+
+           headers2 = Object.keys(rowObject[0]);
+           xcelJsonObject2 = rowObject;    // all rows json object
+           document.getElementById("referenceColoumn").innerHTML = "";
+           document.getElementById("copyToColumn").innerHTML = "";
+           for(var i=0; i<headers2.length; i++){
+              document.getElementById("referenceColoumn").innerHTML += "<option value='"+ headers2[i] +"'>"+ headers2[i] +"</option>";
+              document.getElementById("copyToColumn").innerHTML += "<option value='"+ headers2[i] +"'>"+ headers2[i] +"</option>";
+           }
+         }
+      }
+      document.getElementById("uploadBtn").innerHTML = "Start copying and download when finished";
+      document.getElementById("uploadBtn").disabled = false;
+  })
+
+
+// copying contents
+  function startCopy(){
+      var searchInColumn = document.getElementById("searchInColumn").value;
+      var copyFromColumn = document.getElementById("copyFromColumn").value;
+      var referenceColoumn = document.getElementById("referenceColoumn").value;
+      var copyToColumn = document.getElementById("copyToColumn").value;
+      if (searchInColumn != "" || copyToColumn != "" || copyFromColumn != "" || referenceColoumn != "") {
+        document.getElementById("uploadBtn").innerHTML = "<i class='fa fa-circle-o-notch fa-spin' style='font-size:15px'></i> Please wait while loading!";
+
+        xcelJsonObject2.forEach(copyToRow =>{
+          if (document.getElementById("overwrite").checked) {
+            xcelJsonObject1.forEach(copyFromRow => {
+              if ( copyToRow[referenceColoumn] == copyFromRow[searchInColumn] ) {
+                copyToRow[copyToColumn] = copyFromRow[copyFromColumn];
+              }
+            });
+          }else{
+              xcelJsonObject1.forEach(copyFromRow => {
+                if ( (!copyToRow[copyToColumn] || copyToRow[copyToColumn].length === 0) && ( copyToRow[referenceColoumn] == copyFromRow[searchInColumn] ) ) {
+                  copyToRow[copyToColumn] = copyFromRow[copyFromColumn];
+                }
+              });
+          }
+
+        });
+        download();
+      }else {
+        alert("Please select all required headers!!");
+      }
+  }
+
+
+
+// downloading the excel
+  function download(){
+        var ws = XLSX.utils.json_to_sheet(xcelJsonObject2);
+        var filename = outputExcelFileName;
+        var ws_name = "results";
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, ws_name);
+        XLSX.writeFile(wb, filename);
+        document.getElementById("uploadBtn").innerHTML = "Copy successfull and an excel file has been downloaded.";
+    }
+
+
+
+</script>
+
+</body>
+</html>
